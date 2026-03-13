@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FLOWDESK v2</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060810;--panel:#0a0e18;--border:#151e2e;--green:#00ff88;--red:#ff3355;--yellow:#ffcc00;--blue:#00aaff;--purple:#aa66ff;--orange:#ff8800;--dim:#304055;--text:#8aa0b8;--bright:#c8daea;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'IBM Plex Sans',sans-serif;color:var(--text);min-height:100vh;}
+.topbar{background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.row1{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
+.logo{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:700;color:var(--green);letter-spacing:3px;}
+.ptop .pv{font-family:'IBM Plex Mono',monospace;font-size:1rem;color:white;text-align:right;}
+.ptop .pc{font-family:'IBM Plex Mono',monospace;font-size:.7rem;text-align:right;}
+.row2{display:flex;overflow-x:auto;}.row2::-webkit-scrollbar{display:none;}
+.pb{padding:8px 14px;border:none;background:none;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--dim);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;}
+.pb.active{color:var(--green);border-bottom-color:var(--green);}
+.tfb{padding:8px 10px;border:none;background:none;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--dim);cursor:pointer;border-left:1px solid var(--border);}
+.tfb.active{color:var(--yellow);}
+
+/* VERDICT */
+.vc{margin:12px;border-radius:10px;padding:14px 16px;border:1px solid var(--border);background:var(--panel);transition:all .4s;}
+.vc.long{border-color:rgba(0,255,136,.4);background:rgba(0,255,136,.04);}
+.vc.short{border-color:rgba(255,51,85,.4);background:rgba(255,51,85,.04);}
+.vc.wait{border-color:rgba(255,204,0,.3);background:rgba(255,204,0,.03);}
+.vtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.vlabel{font-size:.6rem;letter-spacing:2px;color:var(--dim);text-transform:uppercase;}
+.vsig{font-family:'IBM Plex Mono',monospace;font-size:1.1rem;font-weight:700;letter-spacing:2px;}
+.vsig.long{color:var(--green);}
+.vsig.short{color:var(--red);}
+.vsig.wait{color:var(--yellow);}
+.vsig.neutral{color:var(--dim);}
+.vdesc{font-size:.72rem;color:var(--text);line-height:1.5;margin-bottom:10px;}
+.bbar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:4px;}
+.bfill{height:100%;border-radius:2px;transition:width .6s;}
+.bfill.long{background:var(--green);}
+.bfill.short{background:var(--red);}
+.bfill.wait{background:var(--yellow);}
+.bfill.neutral{background:var(--dim);}
+.blabel{display:flex;justify-content:space-between;font-size:.6rem;color:var(--dim);}
+
+/* ALERT FEED */
+.alert-feed{margin:0 12px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.af-title{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:2px;color:var(--dim);text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.af-title .badge{font-size:.55rem;padding:2px 6px;border-radius:3px;background:rgba(255,204,0,.1);color:var(--yellow);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.alerts-list{max-height:200px;overflow-y:auto;}
+.alert-item{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;border-bottom:1px solid var(--border);animation:slideIn .3s ease;}
+.alert-item:last-child{border-bottom:none;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.alert-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
+.alert-body{flex:1;}
+.alert-title{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:700;margin-bottom:2px;}
+.alert-title.whale{color:var(--blue);}
+.alert-title.sweep{color:var(--yellow);}
+.alert-title.volume{color:var(--orange);}
+.alert-title.orderbook{color:var(--purple);}
+.alert-title.bull{color:var(--green);}
+.alert-title.bear{color:var(--red);}
+.alert-desc{font-size:.62rem;color:var(--dim);line-height:1.4;}
+.alert-time{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--dim);flex-shrink:0;margin-top:2px;}
+.no-alerts{text-align:center;padding:20px;font-size:.7rem;color:var(--dim);}
+
+/* ORDERBOOK */
+.ob-section{margin:0 12px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;}
+.stitle{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;}
+.ob-bar-wrap{margin-bottom:8px;}
+.ob-labels{display:flex;justify-content:space-between;font-size:.62rem;margin-bottom:4px;}
+.ob-bid-label{color:var(--green);}
+.ob-ask-label{color:var(--red);}
+.ob-track{height:12px;background:var(--border);border-radius:6px;overflow:hidden;display:flex;}
+.ob-bid-fill{height:100%;background:linear-gradient(90deg,rgba(0,255,136,.6),rgba(0,255,136,.3));transition:width .5s;}
+.ob-ask-fill{height:100%;background:linear-gradient(90deg,rgba(255,51,85,.3),rgba(255,51,85,.6));transition:width .5s;}
+.ob-verdict{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;margin-top:8px;padding:6px;border-radius:4px;}
+.ob-verdict.bull{background:rgba(0,255,136,.08);color:var(--green);}
+.ob-verdict.bear{background:rgba(255,51,85,.08);color:var(--red);}
+.ob-verdict.neutral{background:rgba(48,64,85,.2);color:var(--dim);}
+.ob-levels{margin-top:10px;}
+.ob-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;font-family:'IBM Plex Mono',monospace;font-size:.65rem;}
+.ob-price{color:var(--bright);}
+.ob-size{color:var(--dim);}
+.ob-size.big{color:var(--yellow);font-weight:700;}
+.ob-divider{text-align:center;font-size:.6rem;color:var(--blue);padding:3px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:3px 0;}
+
+/* CHARTS */
+.cs{margin:0 12px 12px;}
+.ct{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;display:flex;justify-content:space-between;}
+.ct span{color:var(--blue);}
+canvas{display:block;width:100%;border-radius:8px;background:var(--panel);border:1px solid var(--border);}
+
+/* METRICS */
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px;}
+.mc{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.ml{font-size:.58rem;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase;margin-bottom:4px;}
+.mv{font-family:'IBM Plex Mono',monospace;font-size:.88rem;color:white;margin-bottom:2px;}
+.ms{font-size:.62rem;color:var(--dim);}
+.mv.bull{color:var(--green);}
+.mv.bear{color:var(--red);}
+.mv.warn{color:var(--yellow);}
+
+/* MISC SECTIONS */
+.lsec,.vsec,.tpsec,.tsec{margin:0 12px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;}
+.lr{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);}
+.lr:last-child{border-bottom:none;}
+.ld{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ld.res{background:var(--red);}
+.ld.sup{background:var(--green);}
+.ld.hunt{background:var(--yellow);animation:blink .8s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.lp{font-family:'IBM Plex Mono',monospace;font-size:.75rem;color:var(--bright);flex:1;}
+.ltag{font-size:.6rem;color:var(--dim);}
+.ldist{font-family:'IBM Plex Mono',monospace;font-size:.65rem;}
+.vrow{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+.vk{font-size:.65rem;color:var(--dim);}
+.vv{font-family:'IBM Plex Mono',monospace;font-size:.72rem;}
+.vv.bull{color:var(--green);}
+.vv.bear{color:var(--red);}
+.tpr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);}
+.tpr:last-child{border-bottom:none;}
+.tpk{font-size:.62rem;color:var(--dim);}
+.tpv{font-family:'IBM Plex Mono',monospace;font-size:.72rem;}
+
+/* TAPE */
+.tff{max-height:160px;overflow-y:auto;}
+.ti{display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(21,30,46,.6);font-family:'IBM Plex Mono',monospace;font-size:.65rem;animation:fi .2s;}
+@keyframes fi{from{opacity:0;transform:translateX(-4px)}to{opacity:1}}
+.tsi{padding:1px 5px;border-radius:2px;font-size:.58rem;}
+.ti.buy .tsi{background:rgba(0,255,136,.12);color:var(--green);}
+.ti.sell .tsi{background:rgba(255,51,85,.12);color:var(--red);}
+.ti.buy .tpp{color:var(--green);}
+.ti.sell .tpp{color:var(--red);}
+.tsz{color:var(--dim);}
+.tbig{color:var(--yellow)!important;font-weight:700;}
+
+.rbtn{display:block;width:calc(100% - 24px);margin:0 12px 12px;background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.2);border-radius:8px;padding:13px;color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:2px;cursor:pointer;}
+.rbtn:disabled{opacity:.4;}
+.footer{text-align:center;padding:8px;font-size:.6rem;color:var(--dim);margin-bottom:20px;}
+.ls{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:999;transition:opacity .3s;}
+.ls.hidden{opacity:0;pointer-events:none;}
+.sp{width:40px;height:40px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lt{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--dim);letter-spacing:2px;}
+
+/* Sound toggle */
+.sound-btn{background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:.6rem;color:var(--dim);cursor:pointer;font-family:'IBM Plex Mono',monospace;}
+.sound-btn.on{border-color:var(--green);color:var(--green);}
+</style>
+</head>
+<body>
+<div class="ls" id="ls"><div class="sp"></div><div class="lt" id="ltxt">MENGAMBIL DATA...</div></div>
+
+<div class="topbar">
+  <div class="row1">
+    <div class="logo">FLOWDESK <span style="font-size:.5rem;color:var(--dim)">BYBIT</span></div>
+    <div class="ptop"><div class="pv" id="pv">—</div><div class="pc" id="pc">—</div></div>
+  </div>
+  <div class="row2">
+    <button class="pb active" onclick="sP('BTCUSDT',this)">BTC</button>
+    <button class="pb" onclick="sP('ETHUSDT',this)">ETH</button>
+    <button class="pb" onclick="sP('SOLUSDT',this)">SOL</button>
+    <button class="pb" onclick="sP('BNBUSDT',this)">BNB</button>
+    <button class="pb" onclick="sP('XRPUSDT',this)">XRP</button>
+    <button class="tfb" onclick="sT('15',this)">15M</button>
+    <button class="tfb" onclick="sT('60',this)">1H</button>
+    <button class="tfb active" onclick="sT('240',this)">4H</button>
+    <button class="tfb" onclick="sT('D',this)">1D</button>
+  </div>
+</div>
+
+<!-- VERDICT -->
+<div class="vc neutral" id="vcard">
+  <div class="vtop"><div class="vlabel">Order Flow Verdict</div><div class="vsig neutral" id="vs">LOADING</div></div>
+  <div class="vdesc" id="vd">Menghubungi Bybit API...</div>
+  <div class="bbar"><div class="bfill neutral" id="bf" style="width:50%"></div></div>
+  <div class="blabel"><span id="bp">BULL —%</span><span id="bsp">BEAR —%</span></div>
+</div>
+
+<!-- ALERT FEED -->
+<div class="alert-feed">
+  <div class="af-title">
+    <span>⚡ SMART ALERT FEED</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="badge" id="alertBadge">LIVE</span>
+      <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔕 MUTE</button>
+    </div>
+  </div>
+  <div class="alerts-list" id="alertsList">
+    <div class="no-alerts">Memantau market... alert akan muncul di sini</div>
+  </div>
+</div>
+
+<!-- ORDERBOOK IMBALANCE -->
+<div class="ob-section">
+  <div class="stitle">📊 ORDERBOOK IMBALANCE</div>
+  <div class="ob-bar-wrap">
+    <div class="ob-labels">
+      <span class="ob-bid-label">BID <span id="bidPct">—%</span></span>
+      <span style="font-size:.6rem;color:var(--dim)" id="obSpread">Spread: —</span>
+      <span class="ob-ask-label"><span id="askPct">—%</span> ASK</span>
+    </div>
+    <div class="ob-track">
+      <div class="ob-bid-fill" id="bidFill" style="width:50%"></div>
+      <div class="ob-ask-fill" id="askFill" style="width:50%"></div>
+    </div>
+  </div>
+  <div class="ob-verdict neutral" id="obVerdict">Memuat orderbook...</div>
+  <div class="ob-levels" id="obLevels"></div>
+</div>
+
+<!-- CHARTS -->
+<div class="cs"><div class="ct">CANDLESTICK + VWAP + EMA <span id="chartlbl">—</span></div><canvas id="mainc" height="220"></canvas></div>
+<div class="cs"><div class="ct">CANDLE DELTA <span id="dlbl">—</span></div><canvas id="deltac" height="80"></canvas></div>
+<div class="cs"><div class="ct">CVD CUMULATIVE <span id="cvdlbl">—</span></div><canvas id="cvdc" height="80"></canvas></div>
+<div class="cs"><div class="ct">VOLUME <span id="vollbl">—</span></div><canvas id="volc" height="70"></canvas></div>
+
+<!-- METRICS -->
+<div class="mg">
+  <div class="mc"><div class="ml">EMA 21/50</div><div class="mv" id="e1">—</div><div class="ms" id="e2">—</div></div>
+  <div class="mc"><div class="ml">RSI 14</div><div class="mv" id="r1">—</div><div class="ms" id="r2">—</div></div>
+  <div class="mc"><div class="ml">CVD</div><div class="mv" id="c1">—</div><div class="ms" id="c2">—</div></div>
+  <div class="mc"><div class="ml">Volume</div><div class="mv" id="v1">—</div><div class="ms" id="v2">—</div></div>
+  <div class="mc"><div class="ml">Open Interest</div><div class="mv" id="o1">—</div><div class="ms">Bybit Futures</div></div>
+  <div class="mc"><div class="ml">Funding Rate</div><div class="mv" id="f1">—</div><div class="ms" id="f2">—</div></div>
+</div>
+
+<!-- VWAP -->
+<div class="vsec"><div class="stitle">VWAP LEVELS</div>
+  <div class="vrow"><div class="vk">VWAP</div><div class="vv" id="vwapv" style="color:var(--blue)">—</div></div>
+  <div class="vrow"><div class="vk">+1σ</div><div class="vv" id="vwapu" style="color:var(--red)">—</div></div>
+  <div class="vrow"><div class="vk">-1σ</div><div class="vv" id="vwapl" style="color:var(--green)">—</div></div>
+  <div class="vrow"><div class="vk">Posisi</div><div class="vv" id="vwapp">—</div></div>
+</div>
+
+<!-- LIQUIDITY MAP -->
+<div class="lsec"><div class="stitle">LIQUIDITY MAP</div><div id="liqmap"><div style="font-size:.7rem;color:var(--dim)">Menghitung...</div></div></div>
+
+<!-- TP/SL -->
+<div class="tpsec"><div class="stitle">PARTIAL TP STRATEGY</div>
+  <div class="tpr"><div class="tpk">TP1 — 40% posisi (+15%)</div><div class="tpv" id="tp1" style="color:var(--green)">—</div></div>
+  <div class="tpr"><div class="tpk">TP2 — 40% posisi (+30%)</div><div class="tpv" id="tp2" style="color:var(--blue)">—</div></div>
+  <div class="tpr"><div class="tpk">Trailing — 20% (+50%)</div><div class="tpv" id="tp3" style="color:var(--purple)">—</div></div>
+  <div class="tpr"><div class="tpk">Stop Loss (-7%)</div><div class="tpv" id="sl1" style="color:var(--red)">—</div></div>
+</div>
+
+<!-- LIVE TAPE -->
+<div class="tsec">
+  <div class="stitle">LIVE TAPE — <span id="tapeinfo" style="color:var(--green)">connecting...</span></div>
+  <div class="tff" id="tapefeed"></div>
+</div>
+
+<button class="rbtn" id="rbtn" onclick="loadData()">↻ REFRESH DATA</button>
+<div class="footer" id="lastup">Bybit API — No VPN needed 🇮🇩</div>
+
+<script>
+const G = id => document.getElementById(id);
+let pair='BTCUSDT', tf='240', candles=[], price=0;
+let tradeWs=null, obWs=null, tc=0;
+let soundOn=false, alertCount=0;
+let prevSwingHighs=[], prevSwingLows=[];
+let recentVolumes=[], avgVolume=0;
+let obBidTotal=0, obAskTotal=0;
+let lastOBAlert=0, lastSweepAlert=0, lastWhaleAlert=0, lastVolAlert=0;
+
+const fP = p => p>=10000?p.toLocaleString('en-US',{maximumFractionDigits:0}):p>=100?p.toFixed(2):p>=1?p.toFixed(4):p.toFixed(6);
+const fN = n => n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':n.toFixed(0);
+const now = () => new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+// ===== SOUND ALERT =====
+function playBeep(freq=440, dur=0.15, type='sine') {
+  if(!soundOn) return;
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value=freq; o.type=type;
+    g.gain.setValueAtTime(0.3,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    o.start(); o.stop(ctx.currentTime+dur);
+  } catch(e){}
+}
+function toggleSound(){
+  soundOn=!soundOn;
+  const btn=G('soundBtn');
+  btn.textContent=soundOn?'🔔 ON':'🔕 MUTE';
+  btn.className='sound-btn'+(soundOn?' on':'');
+}
+
+// ===== ADD ALERT =====
+function addAlert(type, title, desc, urgent=false) {
+  const icons={whale:'🐋',sweep:'⚡',volume:'🔴',orderbook:'📊',bull:'🟢',bear:'🔴'};
+  const list=G('alertsList');
+  if(list.querySelector('.no-alerts')) list.innerHTML='';
+  alertCount++;
+  G('alertBadge').textContent=alertCount+' ALERTS';
+
+  const el=document.createElement('div');
+  el.className='alert-item';
+  el.innerHTML=`
+    <div class="alert-icon">${icons[type]||'⚡'}</div>
+    <div class="alert-body">
+      <div class="alert-title ${type}">${title}</div>
+      <div class="alert-desc">${desc}</div>
+    </div>
+    <div class="alert-time">${now()}</div>
+  `;
+  list.insertBefore(el, list.firstChild);
+  if(list.children.length>30) list.removeChild(list.lastChild);
+
+  if(urgent) playBeep(880, 0.2, 'square');
+  else playBeep(440, 0.1);
+}
+
+// ===== BYBIT API =====
+async function bybit(path) {
+  for(const base of ['https://api.bybit.com','https://api.bytick.com']){
+    try{const r=await fetch(base+path,{signal:AbortSignal.timeout(10000)});if(r.ok){const d=await r.json();return d.result||d;}}catch(e){}
+  }
+  return null;
+}
+
+// ===== MATH =====
+function calcEMA(arr,p){const k=2/(p+1);let e=arr.slice(0,p).reduce((a,b)=>a+b,0)/p;for(let i=p;i<arr.length;i++)e=arr[i]*k+e*(1-k);return e;}
+function calcRSI(c,p=14){let g=0,l=0;for(let i=c.length-p;i<c.length;i++){const d=c[i]-c[i-1];d>0?g+=d:l-=d;}const ag=g/p,al=l/p;return al===0?100:100-(100/(1+ag/al));}
+function calcVWAP(c){let tv=0,vol=0;c.forEach(x=>{const t=(x.high+x.low+x.close)/3,v=x.volume;tv+=t*v;vol+=v;});const vw=tv/vol;let sq=0;c.forEach(x=>{const t=(x.high+x.low+x.close)/3;sq+=x.volume*Math.pow(t-vw,2);});return{vw,u1:vw+Math.sqrt(sq/vol),l1:vw-Math.sqrt(sq/vol)};}
+function getDelta(c){const r=c.high-c.low||.0001,b=(c.close-c.low)/r;return c.volume*(b*2-1);}
+function getSwings(c,p){
+  const H=c.map(x=>x.high),L=c.map(x=>x.low),sH=[],sL=[];
+  for(let i=3;i<c.length-3;i++){
+    if(H[i]>H[i-1]&&H[i]>H[i-2]&&H[i]>H[i-3]&&H[i]>H[i+1]&&H[i]>H[i+2]&&H[i]>H[i+3])sH.push(H[i]);
+    if(L[i]<L[i-1]&&L[i]<L[i-2]&&L[i]<L[i-3]&&L[i]<L[i+1]&&L[i]<L[i+2]&&L[i]<L[i+3])sL.push(L[i]);
+  }
+  return{res:sH.filter(x=>x>p).sort((a,b)=>a-b).slice(0,4),sup:sL.filter(x=>x<p).sort((a,b)=>b-a).slice(0,4)};
+}
+
+// ===== LIQUIDITY SWEEP DETECTION =====
+function checkLiquiditySweep(currentPrice, liq) {
+  const t = Date.now();
+  if(t - lastSweepAlert < 60000) return; // max 1 alert per minute
+
+  // Check if price swept through a swing high/low recently
+  liq.res.forEach(r => {
+    if(currentPrice > r && currentPrice < r*1.003) {
+      lastSweepAlert = t;
+      addAlert('sweep','⚡ LIQUIDITY SWEEP — RESISTANCE',
+        `Harga ${fP(currentPrice)} baru sweep resistance $${fP(r)}. Institusi hunting stop loss SHORT. Pantau reversal!`, true);
+    }
+  });
+  liq.sup.forEach(s => {
+    if(currentPrice < s && currentPrice > s*0.997) {
+      lastSweepAlert = t;
+      addAlert('sweep','⚡ LIQUIDITY SWEEP — SUPPORT',
+        `Harga ${fP(currentPrice)} baru sweep support $${fP(s)}. Institusi hunting stop loss LONG. Pantau reversal!`, true);
+    }
+  });
+}
+
+// ===== VOLUME SPIKE DETECTION =====
+function checkVolumeSpike(tradeUSD, tradePrice, isBuy) {
+  const t = Date.now();
+  recentVolumes.push(tradeUSD);
+  if(recentVolumes.length > 500) recentVolumes.shift();
+  const avg = recentVolumes.reduce((a,b)=>a+b,0)/recentVolumes.length;
+
+  // Spike = single trade > 5x average
+  if(tradeUSD > avg * 8 && tradeUSD > 200000 && t - lastVolAlert > 30000) {
+    lastVolAlert = t;
+    addAlert('volume',
+      `🔴 ABNORMAL VOLUME SPIKE — ${isBuy?'BUY':'SELL'}`,
+      `Trade $${fN(tradeUSD)} masuk di $${fP(tradePrice)}. ${(tradeUSD/avg).toFixed(1)}x di atas rata-rata. ${isBuy?'Akumulasi agresif!':'Distribusi agresif!'}`,
+      true);
+  }
+}
+
+// ===== WHALE DETECTION =====
+function checkWhale(tradeUSD, tradePrice, isBuy) {
+  const t = Date.now();
+  if(tradeUSD > 500000 && t - lastWhaleAlert > 20000) {
+    lastWhaleAlert = t;
+    addAlert('whale',
+      `🐋 WHALE ${isBuy?'BUY':'SELL'} — $${fN(tradeUSD)}`,
+      `Order besar $${fN(tradeUSD)} di harga $${fP(tradePrice)}. ${isBuy?'Smart money accumulating.':'Smart money distributing.'}`,
+      true);
+  }
+}
+
+// ===== ORDERBOOK IMBALANCE CHECK =====
+function checkOBImbalance(bidTotal, askTotal) {
+  const t = Date.now();
+  const total = bidTotal + askTotal;
+  if(total === 0) return;
+  const bidPct = bidTotal/total*100;
+  const askPct = 100-bidPct;
+
+  if(Math.abs(bidPct-50) > 20 && t - lastOBAlert > 45000) {
+    lastOBAlert = t;
+    if(bidPct > 70) {
+      addAlert('orderbook','📊 ORDERBOOK IMBALANCE — BID DOMINAN',
+        `Bid ${bidPct.toFixed(0)}% vs Ask ${askPct.toFixed(0)}%. Tekanan beli sangat kuat di level ini. Potensi move naik.`);
+    } else if(askPct > 70) {
+      addAlert('orderbook','📊 ORDERBOOK IMBALANCE — ASK DOMINAN',
+        `Ask ${askPct.toFixed(0)}% vs Bid ${bidPct.toFixed(0)}%. Tekanan jual sangat kuat. Potensi move turun.`);
+    }
+  }
+}
+
+// ===== DRAW CANDLES =====
+function initCanvas(id,h){const cv=G(id),dpr=window.devicePixelRatio||1,W=cv.parentElement.clientWidth-24;cv.width=W*dpr;cv.height=h*dpr;cv.style.width=W+'px';cv.style.height=h+'px';const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);return{ctx,W,H:h};}
+
+function drawCandles(vd){
+  const{ctx,W,H}=initCanvas('mainc',220);
+  const N=Math.min(60,candles.length),sl=candles.slice(-N);
+  const pad={t:16,b:16,l:4,r:56},cw=(W-pad.l-pad.r)/N;
+  const mn=Math.min(...sl.map(c=>c.low),vd.l1)*.9996,mx=Math.max(...sl.map(c=>c.high),vd.u1)*1.0004,rng=mx-mn,py=p=>pad.t+(mx-p)/rng*(H-pad.t-pad.b);
+  ctx.clearRect(0,0,W,H);
+  for(let i=0;i<=4;i++){const y=pad.t+(H-pad.t-pad.b)*i/4;ctx.strokeStyle='#0e1422';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillStyle='#304055';ctx.font='8px IBM Plex Mono';ctx.fillText(fP(mx-rng*i/4),W-pad.r+3,y+3);}
+  ctx.fillStyle='rgba(0,170,255,.05)';ctx.fillRect(pad.l,py(vd.u1),W-pad.l-pad.r,py(vd.l1)-py(vd.u1));
+  ctx.strokeStyle='rgba(0,170,255,.7)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(pad.l,py(vd.vw));ctx.lineTo(W-pad.r,py(vd.vw));ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(0,170,255,.8)';ctx.font='7px IBM Plex Mono';ctx.fillText('VWAP',W-pad.r+3,py(vd.vw)+3);
+  const closes=candles.map(c=>c.close);
+  [{p:21,col:'rgba(255,204,0,.8)'},{p:50,col:'rgba(170,102,255,.7)'}].forEach(({p,col})=>{
+    ctx.strokeStyle=col;ctx.lineWidth=1.2;ctx.beginPath();let s=false;
+    for(let i=Math.max(0,candles.length-N);i<candles.length;i++){if(i<p)continue;const e=calcEMA(closes.slice(0,i+1),p),x=pad.l+(i-(candles.length-N))*cw+cw/2,y=py(e);if(!s){ctx.moveTo(x,y);s=true;}else ctx.lineTo(x,y);}
+    ctx.stroke();
+  });
+  sl.forEach((c,i)=>{
+    const x=pad.l+i*cw,bull=c.close>=c.open;
+    ctx.strokeStyle=bull?'#00ff88':'#ff3355';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+cw/2,py(c.high));ctx.lineTo(x+cw/2,py(c.low));ctx.stroke();
+    const bw=Math.max(1,cw*.65),bx=x+(cw-bw)/2,by=py(Math.max(c.open,c.close)),bh=Math.max(1,Math.abs(py(c.open)-py(c.close)));
+    ctx.fillStyle=bull?'rgba(0,255,136,.8)':'rgba(255,51,85,.8)';ctx.fillRect(bx,by,bw,bh);
+  });
+  const cy=py(price);ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(pad.l,cy);ctx.lineTo(W-pad.r,cy);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='white';ctx.font='bold 8px IBM Plex Mono';ctx.fillText(fP(price),W-pad.r+3,cy+3);
+}
+
+function drawSubCharts(){
+  const deltas=candles.map(c=>getDelta(c));
+  const{ctx:dc,W:dW,H:dH}=initCanvas('deltac',80);
+  const N=Math.min(60,deltas.length),sl=deltas.slice(-N),mx=Math.max(...sl.map(d=>Math.abs(d)),1),bw=dW/N,mid=dH/2;
+  dc.clearRect(0,0,dW,dH);dc.strokeStyle='#1a2535';dc.lineWidth=1;dc.beginPath();dc.moveTo(0,mid);dc.lineTo(dW,mid);dc.stroke();
+  sl.forEach((d,i)=>{const bh=Math.abs(d)/mx*(mid-3);dc.fillStyle=d>0?'rgba(0,255,136,.75)':'rgba(255,51,85,.75)';if(d>0)dc.fillRect(i*bw+1,mid-bh,bw-2,bh);else dc.fillRect(i*bw+1,mid,bw-2,bh);});
+  const ld=sl[sl.length-1]||0;G('dlbl').textContent=(ld>0?'+':'')+fN(ld);G('dlbl').style.color=ld>0?'var(--green)':'var(--red)';
+  let cum=0;const cv=deltas.map(d=>{cum+=d;return cum;});
+  const{ctx:cc,W:cW,H:cH}=initCanvas('cvdc',80);
+  const sl2=cv.slice(-Math.min(60,cv.length)),mn=Math.min(...sl2),mx2=Math.max(...sl2),rng=mx2-mn||1,py2=v=>4+(mx2-v)/rng*(cH-8),bw2=cW/sl2.length,last=sl2[sl2.length-1];
+  cc.clearRect(0,0,cW,cH);cc.fillStyle=last>0?'rgba(0,255,136,.06)':'rgba(255,51,85,.06)';cc.beginPath();cc.moveTo(0,py2(sl2[0]));sl2.forEach((v,i)=>cc.lineTo(i*bw2+bw2/2,py2(v)));cc.lineTo(cW,cH);cc.lineTo(0,cH);cc.closePath();cc.fill();
+  cc.strokeStyle=last>0?'rgba(0,255,136,.9)':'rgba(255,51,85,.9)';cc.lineWidth=1.5;cc.beginPath();sl2.forEach((v,i)=>i===0?cc.moveTo(bw2/2,py2(v)):cc.lineTo(i*bw2+bw2/2,py2(v)));cc.stroke();
+  G('cvdlbl').textContent=(last>0?'+':'')+fN(last);G('cvdlbl').style.color=last>0?'var(--green)':'var(--red)';
+  const{ctx:vc,W:vW,H:vH}=initCanvas('volc',70);
+  const slv=candles.slice(-Math.min(60,candles.length)),vs=slv.map(c=>c.volume),mxv=Math.max(...vs,1),avgv=vs.reduce((a,b)=>a+b,0)/vs.length,bwv=vW/slv.length;
+  vc.clearRect(0,0,vW,vH);const ay=(1-avgv/mxv)*(vH-3)+1;vc.strokeStyle='rgba(255,204,0,.4)';vc.lineWidth=1;vc.setLineDash([2,3]);vc.beginPath();vc.moveTo(0,ay);vc.lineTo(vW,ay);vc.stroke();vc.setLineDash([]);
+  slv.forEach((c,i)=>{const v=c.volume,bull=c.close>=c.open,big=v>avgv*1.5,bh=(v/mxv)*(vH-3);vc.fillStyle=big?(bull?'rgba(0,255,136,1)':'rgba(255,51,85,1)'):(bull?'rgba(0,255,136,.4)':'rgba(255,51,85,.4)');vc.fillRect(i*bwv+1,vH-bh,bwv-2,bh);});
+  const lv=candles[candles.length-1].volume,rat=lv/avgv;G('vollbl').textContent=fN(lv)+(rat>1.5?' 🔥':'');G('vollbl').style.color=rat>1.5?'var(--yellow)':'var(--text)';
+}
+
+// ===== MAIN LOAD =====
+async function loadData(){
+  G('rbtn').disabled=true;G('ls').classList.remove('hidden');G('ltxt').textContent='MENGAMBIL DATA...';
+  try{
+    const[klRes,tickRes,oiRes,fundRes]=await Promise.all([
+      bybit(`/v5/market/kline?category=linear&symbol=${pair}&interval=${tf}&limit=200`),
+      bybit(`/v5/market/tickers?category=linear&symbol=${pair}`),
+      bybit(`/v5/market/open-interest?category=linear&symbol=${pair}&intervalTime=4h&limit=1`),
+      bybit(`/v5/market/funding/history?category=linear&symbol=${pair}&limit=1`),
+    ]);
+    if(!klRes||!tickRes)throw new Error('Bybit tidak merespons.');
+    const raw=klRes.list||[];
+    candles=raw.reverse().map(k=>({open:parseFloat(k[1]),high:parseFloat(k[2]),low:parseFloat(k[3]),close:parseFloat(k[4]),volume:parseFloat(k[5])}));
+    const tick=(tickRes.list||[])[0]||{};
+    price=parseFloat(tick.lastPrice||0);
+    const chg=parseFloat(tick.price24hPcnt||0)*100;
+    G('pv').textContent='$'+fP(price);G('pc').textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%';G('pc').style.color=chg>=0?'var(--green)':'var(--red)';
+    const closes=candles.map(c=>c.close),vd=calcVWAP(candles),e21=calcEMA(closes,21),e50=calcEMA(closes,50),rs=calcRSI(closes);
+    const vs=candles.map(c=>c.volume),avgVol=vs.reduce((a,b)=>a+b,0)/vs.length,lastVol=vs[vs.length-1];
+    let cum=0;candles.forEach(c=>cum+=getDelta(c));const cvdBull=cum>0;
+    const liq=getSwings(candles,price);
+    prevSwingHighs=liq.res; prevSwingLows=liq.sup;
+    recentVolumes=vs.slice(-100); avgVolume=avgVol;
+
+    let bull=0,bear=0;
+    if(price>e21&&price>e50)bull+=2;else bear+=2;
+    if(e21>e50)bull+=1;else bear+=1;
+    if(rs>50&&rs<70)bull+=1.5;else if(rs<50&&rs>30)bear+=1.5;
+    if(rs>=70)bear+=1;if(rs<=30)bull+=1;
+    if(price>vd.vw)bull+=2;else bear+=2;
+    if(cvdBull)bull+=2;else bear+=2;
+    if(lastVol>avgVol*1.3){if(candles[candles.length-1].close>candles[candles.length-1].open)bull+=1.5;else bear+=1.5;}
+
+    const tot=bull+bear,bpct=Math.round(bull/tot*100);
+    let sig,cls,desc;
+    if(bull>=8&&rs<70){sig='▲ LONG BIAS';cls='long';desc='Semua layer bullish aligned. Entry di pullback ke VWAP/EMA21.';}
+    else if(bear>=8&&rs>30){sig='▼ SHORT BIAS';cls='short';desc='Order flow bearish. Entry di retest resistance.';}
+    else if(bull>=5.5){sig='◈ WATCH LONG';cls='wait';desc='Sinyal bullish tapi belum full konfluence.';}
+    else if(bear>=5.5){sig='◈ WATCH SHORT';cls='wait';desc='Sinyal bearish developing.';}
+    else{sig='— NO BIAS';cls='neutral';desc='Market mixed/ranging. Tunggu di luar posisi.';}
+
+    G('vcard').className='vc '+cls;G('vs').textContent=sig;G('vs').className='vsig '+cls;G('vd').textContent=desc;
+    G('bf').style.width=bpct+'%';G('bf').className='bfill '+cls;G('bp').textContent='BULL '+bpct+'%';G('bsp').textContent='BEAR '+(100-bpct)+'%';
+    G('chartlbl').textContent=pair+' '+({'15':'15M','60':'1H','240':'4H','D':'1D'}[tf]);
+    drawCandles(vd);drawSubCharts();
+
+    G('e1').textContent='$'+fP(e21)+' / $'+fP(e50);G('e1').className='mv '+(price>e21&&price>e50?'bull':'bear');G('e2').textContent=e21>e50?'🟢 Golden Cross':'🔴 Death Cross';
+    G('r1').textContent=rs.toFixed(1);G('r1').className='mv '+(rs>=70?'warn':rs>50?'bull':'bear');G('r2').textContent=rs>=70?'Overbought ⚠️':rs<=30?'Oversold ⚠️':rs>50?'Bullish momentum':'Bearish momentum';
+    G('c1').textContent=cvdBull?'BUYING':'SELLING';G('c1').className='mv '+(cvdBull?'bull':'bear');G('c2').textContent=(cvdBull?'▲ Akumulasi':'▼ Distribusi')+' '+fN(Math.abs(cum));
+    const vr=lastVol/avgVol;G('v1').textContent=(vr>1?'+':'')+((vr-1)*100).toFixed(0)+'%';G('v1').className='mv '+(vr>1.5?'warn':vr>1?'bull':'');G('v2').textContent=vr>1.5?'⚡ Volume spike!':'vs rata-rata';
+    if(oiRes&&oiRes.list&&oiRes.list[0])G('o1').textContent='$'+fN(parseFloat(oiRes.list[0].openInterest));else G('o1').textContent='—';
+    if(fundRes&&fundRes.list&&fundRes.list[0]){const fr=parseFloat(fundRes.list[0].fundingRate)*100;G('f1').textContent=(fr>=0?'+':'')+fr.toFixed(4)+'%';G('f1').className='mv '+(fr>0.1?'bear':fr<-.05?'bull':'');G('f2').textContent=fr>0.1?'Long dominan ⚠️':fr<-.05?'Short dominan ⚠️':'Netral ✓';}else{G('f1').textContent='—';G('f2').textContent='';}
+    G('vwapv').textContent='$'+fP(vd.vw);G('vwapu').textContent='$'+fP(vd.u1);G('vwapl').textContent='$'+fP(vd.l1);
+    let vpos,vcls;
+    if(price>vd.u1){vpos='PREMIUM +1σ';vcls='bear';}else if(price>vd.vw){vpos='Di atas VWAP ✓';vcls='bull';}else if(price>vd.l1){vpos='Di bawah VWAP';vcls='bear';}else{vpos='DISCOUNT -1σ';vcls='bull';}
+    G('vwapp').textContent=vpos;G('vwapp').className='vv '+vcls;
+    const lm=G('liqmap');lm.innerHTML='';
+    const addLiq=(p,t,tag)=>{const d=((p-price)/price*100),near=Math.abs(d)<3;lm.innerHTML+=`<div class="lr"><div class="ld ${near?'hunt':t}"></div><div class="lp">$${fP(p)}</div><div class="ltag">${near?'⚡ HUNT':tag}</div><div class="ldist" style="color:${t==='res'?'var(--red)':'var(--green)'}">${d>0?'+':''}${d.toFixed(1)}%</div></div>`;};
+    liq.res.forEach((r,i)=>addLiq(r,'res','Resistance '+(i+1)));liq.sup.forEach((s,i)=>addLiq(s,'sup','Support '+(i+1)));
+    const dir=cls==='long'?1:cls==='short'?-1:1;
+    G('tp1').textContent='$'+fP(price*(1+dir*.15));G('tp2').textContent='$'+fP(price*(1+dir*.30));G('tp3').textContent='$'+fP(price*(1+dir*.50));G('sl1').textContent='$'+fP(price*(1-dir*.07));
+    G('lastup').textContent='Update: '+new Date().toLocaleString('id-ID');
+
+    // Volume spike check on candles
+    if(vr>2){addAlert('volume','🔴 VOLUME SPIKE TERDETEKSI',`Volume candle terakhir ${vr.toFixed(1)}x di atas rata-rata. Pergerakan besar kemungkinan akan terjadi.`);}
+    // Check sweep on current price
+    checkLiquiditySweep(price, liq);
+
+  }catch(e){G('vs').textContent='ERROR';G('vs').className='vsig neutral';G('vd').textContent=e.message;console.error(e);}
+  G('rbtn').disabled=false;G('ls').classList.add('hidden');
+}
+
+// ===== WEBSOCKET: TRADES + ORDERBOOK =====
+function connectWS(){
+  // Trade stream
+  if(tradeWs) tradeWs.close();
+  tradeWs=new WebSocket('wss://stream.bybit.com/v5/public/linear');
+  tradeWs.onopen=()=>tradeWs.send(JSON.stringify({op:'subscribe',args:[`publicTrade.${pair}`]}));
+  tradeWs.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    if(!d.data||!Array.isArray(d.data))return;
+    d.data.forEach(t=>{
+      const p=parseFloat(t.p),sz=parseFloat(t.v),buy=t.S==='Buy',usd=p*sz;
+      if(usd<200)return;
+      tc++;G('tapeinfo').textContent=tc+' trades';
+      price=p;G('pv').textContent='$'+fP(p);
+      // Checks
+      checkWhale(usd,p,buy);
+      checkVolumeSpike(usd,p,buy);
+      if(prevSwingHighs.length||prevSwingLows.length) checkLiquiditySweep(p,{res:prevSwingHighs,sup:prevSwingLows});
+      // Tape
+      const feed=G('tapefeed'),big=usd>50000;
+      const row=document.createElement('div');
+      row.className='ti '+(buy?'buy':'sell');
+      row.innerHTML=`<span class="tsi">${buy?'BUY':'SEL'}</span><span class="tpp ${big?'tbig':''}">${fP(p)}</span><span class="tsz ${big?'tbig':''}">${big?'🔥':''} $${fN(usd)}</span>`;
+      feed.insertBefore(row,feed.firstChild);
+      if(feed.children.length>40)feed.removeChild(feed.lastChild);
+    });
+  };
+  tradeWs.onerror=tradeWs.onclose=()=>setTimeout(connectWS,3000);
+
+  // Orderbook stream
+  if(obWs) obWs.close();
+  obWs=new WebSocket('wss://stream.bybit.com/v5/public/linear');
+  obWs.onopen=()=>obWs.send(JSON.stringify({op:'subscribe',args:[`orderbook.50.${pair}`]}));
+  obWs.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    if(!d.data)return;
+    const ob=d.data;
+    const bids=(ob.b||[]).slice(0,10), asks=(ob.a||[]).slice(0,10);
+    if(!bids.length&&!asks.length)return;
+
+    // Calculate imbalance
+    const bidVol=bids.reduce((s,b)=>s+parseFloat(b[1]),0);
+    const askVol=asks.reduce((s,a)=>s+parseFloat(a[1]),0);
+    const total=bidVol+askVol;
+    if(total===0)return;
+    const bidPct=bidVol/total*100, askPct=100-bidPct;
+    obBidTotal=bidVol; obAskTotal=askVol;
+
+    // Update UI
+    G('bidFill').style.width=bidPct+'%';
+    G('askFill').style.width=askPct+'%';
+    G('bidPct').textContent=bidPct.toFixed(0)+'%';
+    G('askPct').textContent=askPct.toFixed(0)+'%';
+
+    // Best bid/ask spread
+    if(bids[0]&&asks[0]){
+      const spread=parseFloat(asks[0][0])-parseFloat(bids[0][0]);
+      G('obSpread').textContent='Spread: $'+fP(spread);
+    }
+
+    // Verdict
+    const obEl=G('obVerdict');
+    if(bidPct>65){obEl.textContent=`BID DOMINAN ${bidPct.toFixed(0)}% — Tekanan beli kuat`;obEl.className='ob-verdict bull';}
+    else if(askPct>65){obEl.textContent=`ASK DOMINAN ${askPct.toFixed(0)}% — Tekanan jual kuat`;obEl.className='ob-verdict bear';}
+    else{obEl.textContent=`BALANCED — Bid ${bidPct.toFixed(0)}% / Ask ${askPct.toFixed(0)}%`;obEl.className='ob-verdict neutral';}
+
+    // Show top levels
+    const levEl=G('obLevels');
+    const topAsks=asks.slice(0,4).reverse();
+    const topBids=bids.slice(0,4);
+    const avgOBSize=(bidVol+askVol)/20;
+    let html='';
+    topAsks.forEach(a=>{const sz=parseFloat(a[1]),big=sz>avgOBSize*3;html+=`<div class="ob-row"><span class="ob-price" style="color:var(--red)">$${fP(parseFloat(a[0]))}</span><span class="ob-size ${big?'big':''}">${big?'🧱':''} ${fN(sz)}</span></div>`;});
+    html+=`<div class="ob-divider">— SPREAD — $${fP(price)} —</div>`;
+    topBids.forEach(b=>{const sz=parseFloat(b[1]),big=sz>avgOBSize*3;html+=`<div class="ob-row"><span class="ob-price" style="color:var(--green)">$${fP(parseFloat(b[0]))}</span><span class="ob-size ${big?'big':''}">${big?'🧱':''} ${fN(sz)}</span></div>`;});
+    levEl.innerHTML=html;
+
+    checkOBImbalance(bidVol,askVol);
+  };
+  obWs.onerror=obWs.onclose=()=>setTimeout(()=>{
+    if(obWs&&obWs.readyState===WebSocket.CLOSED)connectOBOnly();
+  },3000);
+}
+
+function connectOBOnly(){
+  obWs=new WebSocket('wss://stream.bybit.com/v5/public/linear');
+  obWs.onopen=()=>obWs.send(JSON.stringify({op:'subscribe',args:[`orderbook.50.${pair}`]}));
+  obWs.onmessage=tradeWs?tradeWs.onmessage:null;
+}
+
+function sP(p,btn){pair=p;document.querySelectorAll('.pb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');tc=0;G('tapefeed').innerHTML='';alertCount=0;G('alertBadge').textContent='LIVE';G('alertsList').innerHTML='<div class="no-alerts">Memantau '+p+'...</div>';loadData();connectWS();}
+function sT(t,btn){tf=t;document.querySelectorAll('.tfb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadData();}
+window.addEventListener('resize',()=>{if(candles.length){const vd=calcVWAP(candles);drawCandles(vd);drawSubCharts();}});
+setInterval(loadData,5*60*1000);
+loadData();
+connectWS();
+</script>
+</body>
+</html>
